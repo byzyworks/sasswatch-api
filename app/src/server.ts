@@ -19,7 +19,7 @@ export const server = async () => {
   // Create the Express app.
   const app = express();
 
-  // Handle possible errors at the very beginning.
+  // Hold the server in a non-functional, but still listening state if a 'fatal' error has occurred.
   app.use((request: express.Request, response: express.Response, next: express.NextFunction) => {
     if (process.exitCode === 0) {
       next();
@@ -40,24 +40,10 @@ export const server = async () => {
   // Our app's logic:
   app.use(authenticator);
   app.use(routes);
+  app.use(error_handler.errorResponse);
   //app.use(migrator);
 
-  /**
-   * Keep in mind the behavior for the localhost-based and exposed servers is slightly different.
-   * The localhost server is used for automatic runtime communications from Cron.
-   * For its sake, the server voids authentication altogether for localhost requests.
-   *
-   * The purpose of this is three-fold:
-   * - To allow Cron to make API requests without storing potentially sensitive credentials in plaintext.
-   * - To not need to have the server constantly be able to retrieve those credentials to create new Cron jobs.
-   * - To avoid needing to install additional third party software for Cron to directly interface with the server's SQLite database, alternatively.
-   *
-   * The username and authorization type are still parsed, but passwords are ignored.
-   * 
-   * To have continued security on the same host machine, run the server in a container or dedicated virtual machine.
-   * 
-   * This is planned to change in the future, likely through a dedicated "cron" user and "cron" role.
-   */
+  // Up goes the servers.
   if (localhost) {
     if (!ipv6_only) {
       app.listen(server_port, '127.0.0.1', max_connections, () => {
