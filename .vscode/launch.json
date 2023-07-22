@@ -10,7 +10,7 @@
             "preLaunchTask": "npm: compile - app",
             "cwd": "${workspaceFolder}/",
             "outputCapture": "std",
-            "console": "externalTerminal",
+            "console": "integratedTerminal",
             "env": {
                 "NODE_ENV": "development"
             }
@@ -24,7 +24,7 @@
             "preLaunchTask": "npm: build - app",
             "cwd": "${workspaceFolder}/",
             "outputCapture": "std",
-            "console": "externalTerminal",
+            "console": "integratedTerminal",
             "env": {
                 "NODE_ENV": "development"
             }
