@@ -12,6 +12,7 @@ export const routes = express.Router();
  * @param {number} req.params.id - The ID of the agenda to attach to the calendar (required).
  */
 routes.post('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -20,4 +21,5 @@ routes.post('/:id', async (req: express.Request, res: express.Response, next: ex
  * This is per calendar, and as such will have no effect on other calendars.
  */
 routes.delete('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });

@@ -19,11 +19,12 @@ interface User {
 export const routes = express.Router();
 
 /**
- * Authorization middleware for user routes.
+ * Resource-level authorization middleware for user routes.
  *
  * Makes sure the users being accessed are either the same user as the authenticated user, have the proper authorization type, or that the authenticated user is authorized as an admin.
  */
 routes.use('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return next();
 });
 
 /**
@@ -34,6 +35,7 @@ routes.use('/', async (req: express.Request, res: express.Response, next: expres
  * @returns {User} The user object, with password hashes ommitted.
  */
 routes.get('/:username', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -43,6 +45,7 @@ routes.get('/:username', async (req: express.Request, res: express.Response, nex
  * @returns {User[]} An array of user objects, with password hashes, owned calendars, agendas, and messages ommitted.
  */
 routes.get('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -52,6 +55,7 @@ routes.get('/', async (req: express.Request, res: express.Response, next: expres
  * @param {string} req.body.password - The main/read-write password to use for the new user, pre-hashed, base64 encoded (required).
  */
 routes.post('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -65,6 +69,7 @@ routes.post('/', async (req: express.Request, res: express.Response, next: expre
  * @param {string} req.body.password   - The user's new password, pre-hashed, base64 encoded (required).
  */
 routes.put('/:username/password/root', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -77,6 +82,7 @@ routes.put('/:username/password/root', async (req: express.Request, res: express
  * @param {string} req.body.password   - The user's new password, pre-hashed, base64 encoded (required).
  */
 routes.put('/:username/password/edit', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -92,6 +98,7 @@ routes.put('/:username/password/edit', async (req: express.Request, res: express
  * @param {string} req.body.password   - The user's new password, pre-hashed, base64 encoded (required).
  */
 routes.put('/:username/password/main', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -105,6 +112,7 @@ routes.put('/:username/password/main', async (req: express.Request, res: express
  * @param {string} req.body.password   - The user's new password, pre-hashed, base64 encoded (required).
  */
 routes.put('/:username/password/view', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -116,6 +124,7 @@ routes.put('/:username/password/view', async (req: express.Request, res: express
  * @param {string} req.params.username - The user principal whose password to delete (required).
  */
 routes.delete('/:username/password/root', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -125,6 +134,7 @@ routes.delete('/:username/password/root', async (req: express.Request, res: expr
  * @param {string} req.params.username - The user principal whose password to delete (required).
  */
 routes.delete('/:username/password/edit', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -134,6 +144,7 @@ routes.delete('/:username/password/edit', async (req: express.Request, res: expr
  * @param {string} req.params.username - The user principal whose password to delete (required).
  */
 routes.delete('/:username/password/view', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -144,4 +155,5 @@ routes.delete('/:username/password/view', async (req: express.Request, res: expr
  * @param {string} req.params.username - The user principal to delete (required).
  */
 routes.delete('/:username', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });

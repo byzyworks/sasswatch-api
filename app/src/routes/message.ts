@@ -5,18 +5,19 @@ import { globals } from '../utility/common.js';
 export const routes = express.Router();
 
 interface Message {
-    id:       number;
-    owner:    string;
-    title:    string;
-    payload?: string;
+  id:       number;
+  owner:    string;
+  title:    string;
+  payload?: string;
 }
 
 /**
- * Authorization middleware for message routes.
+ * Resource-level authorization middleware for message routes.
  *
  * Makes sure the authenticated user is authorized as an admin, or owns the message being accessed and is using the appropriate authorization for the given endpoint.
  */
 routes.use('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return next();
 });
 
 /**
@@ -27,6 +28,7 @@ routes.use('/', async (req: express.Request, res: express.Response, next: expres
  * @returns {Message} The message object.
  */
 routes.get('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -37,6 +39,7 @@ routes.get('/:id', async (req: express.Request, res: express.Response, next: exp
  * @returns {Message[]} An array of message objects, with payloads ommitted.
  */
 routes.get('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -48,6 +51,7 @@ routes.get('/', async (req: express.Request, res: express.Response, next: expres
  * @returns {Message} The new message with its ID for further customization.
  */
 routes.post('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -57,6 +61,7 @@ routes.post('/', async (req: express.Request, res: express.Response, next: expre
  * @param {string} req.body.title - A short description of the message displayed when not being retrieved specifically, such as when displaying the calendar (required).
  */
 routes.put('/:id/title', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -66,6 +71,7 @@ routes.put('/:id/title', async (req: express.Request, res: express.Response, nex
  * @param {any} req.body.payload - Any bit of information that the message will have as a payload, which is of an arbitrary format (required).
  */
 routes.put('/:id/payload', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -73,6 +79,7 @@ routes.put('/:id/payload', async (req: express.Request, res: express.Response, n
  * All events associated to this message will also be affected.
  */
 routes.delete('/:id/payload', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -80,4 +87,5 @@ routes.delete('/:id/payload', async (req: express.Request, res: express.Response
  * This will also delete all associated events that link back to this message.
  */
 routes.delete('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });

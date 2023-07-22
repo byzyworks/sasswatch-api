@@ -11,10 +11,12 @@ export const routes = express.Router();
  * @param {number} req.params.id - The ID of the message to attach to the agenda (required).
  */
 routes.post('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
  * Detach an existing message from an existing schedule agenda (admin or same-user-as-owner minimum editor authorization required).
  */
 routes.delete('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });

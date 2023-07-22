@@ -23,11 +23,12 @@ interface Calendar {
 export const routes = express.Router();
 
 /**
- * Authorization middleware for calendar routes.
+ * Resource-level authorization middleware for calendar routes.
  *
  * Makes sure the authenticated user is authorized as an admin, or owns the message being accessed and is using the appropriate authorization for the given endpoint.
  */
 routes.use('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return next();
 });
 
 /**
@@ -53,6 +54,7 @@ routes.use('/:id/event', eventRoutes);
  * @returns {Calendar} The calendar object.
  */
 routes.get('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -64,6 +66,7 @@ routes.get('/:id', async (req: express.Request, res: express.Response, next: exp
  * @returns {Calendar[]} An array of calendar objects, with event list ommitted.
  */
 routes.get('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -75,6 +78,7 @@ routes.get('/', async (req: express.Request, res: express.Response, next: expres
  * @returns {Calendar} The new calendar with its ID for further customization.
  */
 routes.post('/clone/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -84,6 +88,7 @@ routes.post('/clone/:id', async (req: express.Request, res: express.Response, ne
  * @param {number} req.params.id - The ID of the calendar to refresh (optional).
  */
 routes.post('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -93,6 +98,7 @@ routes.post('/:id', async (req: express.Request, res: express.Response, next: ex
  * @returns {Calendar} The new calendar with its ID for further customization.
  */
 routes.post('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -100,4 +106,5 @@ routes.post('/', async (req: express.Request, res: express.Response, next: expre
  * Deleting a calendar will also delete all associated events.
  */
 routes.delete('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });

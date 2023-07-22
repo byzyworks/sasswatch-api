@@ -26,9 +26,12 @@ interface Agenda {
 export const routes = express.Router();
 
 /**
- * Authorization middleware for agenda routes.
+ * Resource-level authorization middleware for agenda routes.
+ * 
+ * Makes sure the authenticated user is authorized as an admin, or owns the message being accessed and is using the appropriate authorization for the given endpoint.
  */
 routes.use('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return next();
 });
 
 /**
@@ -53,6 +56,7 @@ routes.use('/:id/message', messageRoutes);
  * @returns {Agenda} The agenda object with its messages and child sub-agendas.
  */
 routes.get('/deep/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -67,9 +71,9 @@ routes.get('/:id', async (req: express.Request, res: express.Response, next: exp
   try {
     assert(globals.db !== undefined);
     const row = globals.db.get('SELECT * FROM Agenda WHERE id = ?', req.params.id);
-    res.status(200).json(row);
+    return res.status(200).json(row);
   } catch (err) {
-    next(err);
+    return next(err);
   }
 });
 
@@ -82,9 +86,9 @@ routes.get('/', async (req: express.Request, res: express.Response, next: expres
   try {
     assert(globals.db !== undefined);
     const rows = globals.db.all('SELECT * FROM Agenda');
-    res.status(200).json(rows);
+    return res.status(200).json(rows);
   } catch (err) {
-    next(err);
+    return next(err);
   }
 });
 
@@ -97,6 +101,7 @@ routes.get('/', async (req: express.Request, res: express.Response, next: expres
  * @returns {Agenda} The new agenda with its ID for further customization.
  */
 routes.post('/deep/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -108,6 +113,7 @@ routes.post('/deep/:id', async (req: express.Request, res: express.Response, nex
  * @returns {Agenda} The new agenda with its ID for further customization.
  */
 routes.post('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -119,6 +125,7 @@ routes.post('/:id', async (req: express.Request, res: express.Response, next: ex
  * @returns {Agenda} The new agenda with its ID for further customization.
  */
 routes.post('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -132,6 +139,7 @@ routes.post('/', async (req: express.Request, res: express.Response, next: expre
  * @param {number} req.body.parent - The ID of the parent agenda (required).
  */
 routes.put('/:id/parent', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -143,6 +151,7 @@ routes.put('/:id/parent', async (req: express.Request, res: express.Response, ne
  * @param {string} req.body.cron - The cron expression for when the agenda should activate (required).
  */
 routes.put('/:id/cron/active', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -154,6 +163,7 @@ routes.put('/:id/cron/active', async (req: express.Request, res: express.Respons
  * @param {string} req.body.cron - The cron expression for when the agenda should expire (required).
  */
 routes.put('/:id/cron/expire', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -162,6 +172,7 @@ routes.put('/:id/cron/expire', async (req: express.Request, res: express.Respons
  * @param {number} req.params.id - The ID of the agenda's parent to remove (required).
  */
 routes.delete('/:id/parent', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -170,6 +181,7 @@ routes.delete('/:id/parent', async (req: express.Request, res: express.Response,
  * @param {number} req.params.id - The ID of the agenda's expiring cron expression to remove (required).
  */
 routes.delete('/:id/cron/expire', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -182,6 +194,7 @@ routes.delete('/:id/cron/expire', async (req: express.Request, res: express.Resp
  * @param {number} req.params.id - The ID of the agenda to delete (required).
  */
 routes.delete('/deep/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -194,4 +207,5 @@ routes.delete('/deep/:id', async (req: express.Request, res: express.Response, n
  * @param {number} req.params.id - The ID of the agenda to delete (required).
  */
 routes.delete('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });

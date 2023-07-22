@@ -29,6 +29,7 @@ export const routes = express.Router();
  * @returns {Event} The event object.
  */
 routes.get('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -41,6 +42,7 @@ routes.get('/:id', async (req: express.Request, res: express.Response, next: exp
  * @returns {Event[]} An array of event objects, with agenda list and payloads ommitted.
  */
 routes.get('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -53,6 +55,7 @@ routes.get('/', async (req: express.Request, res: express.Response, next: expres
  * Beware, however, this will cause the agendas to branch off.
  */
 //routes.post('/transformer/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+//  return res.status(200).send();
 //});
 
 /**
@@ -69,6 +72,7 @@ routes.get('/', async (req: express.Request, res: express.Response, next: expres
  * @param {number} req.body.message     - The ID of the message that the event uses for its title and payload (required).
  */
 routes.post('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -79,6 +83,7 @@ routes.post('/', async (req: express.Request, res: express.Response, next: expre
  * @param {number} req.params.id - The ID of the event to delete (required).
  */
 routes.delete('/recurrent/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
 
 /**
@@ -90,4 +95,5 @@ routes.delete('/recurrent/:id', async (req: express.Request, res: express.Respon
  * @param {number} req.params.id - The ID of the event to acknowledge (required).
  */
 routes.delete('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return res.status(200).send();
 });
