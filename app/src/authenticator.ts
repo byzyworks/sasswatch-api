@@ -10,7 +10,7 @@ import { logger }   from './utility/logger.js';
 
 /**
  * Authentication middleware for the API. Executes before any of the route handlers.
- * Authorization is handled within the route handlers according to the resource being accessed.
+ * Authorization is handled within the route handlers according to the resource being accessed, and the role being used.
  *
  * @param {string} req.headers.authorization - The HTTP Authorization header, which should be in the format "Basic <base64-encoded username:roletype:password>".
  */
@@ -18,92 +18,69 @@ export const authenticator = async (req: express.Request, res: express.Response,
   // Rule out any invalid requests.
   const token = (req.headers.authorization || '').split(' ')[1] || '';
   if (token === undefined) {
-    res.status(StatusCodes.FORBIDDEN).send();
+    logger.error(`Invalid authorization token sent.`);
+    return res.status(StatusCodes.FORBIDDEN).send();
   }
 
   // Decode the HTTP Basic Auth token.
-  const http_credentials = Buffer.from(token, 'base64').toString().split(':');
-  const http_username    = http_credentials[0];
-  const http_password    = http_credentials[2];
+  const http_credentials   = Buffer.from(token, 'base64').toString().split(':');
+  const http_name_and_role = http_credentials[0].split(' ');
+  const http_username      = http_name_and_role[0];
+  const http_roletype      = http_name_and_role[1];
+  const http_password      = http_credentials[1];
 
-  /**
-   * The roletype is the authorization level requested by the user.
-   * There are four role types:
+  // The database should have already been initialized by this point.
+  assert(globals.db !== undefined);
+
+  // Check the database if the user exists.
+  let db_user_id;
+  try {
+    db_user_id = (await globals.db.get('SELECT id FROM User WHERE name = ?', http_username)).id;
+  } catch (err) {
+    logger.error(`Invalid username "${http_username}".`);
+    return res.status(StatusCodes.FORBIDDEN).send();
+  }
+
+    /**
+   * The roletype is the authorization type requested by the user.
+   * These are the role types that are currently supported by the application:
    *
    * "view" - View access         - Permits read-only access to the user's calendars and events.
    * "main" - Maintainence access - Permits read access to the user's calendars and events, with the ability to acknowledge/delete singular events, clearing them out.
    * "edit" - Edit access         - Permits read-write access to all of the user's owned assets, including their calendars, events, template agendas, and messages.
    * "root" - Admin access        - Permits read-write access to all assets, regardless of ownership. Unrestricted. Use with caution.
+   * "cron" - Crontab access      - Permits adding and deleting individual events only. Specifically for Cron, i.e. internal use only.
    *
-   * Each requires a different password, though higher access levels grant all the same permissions as lower ones.
+   * Anything else is automatically 403'd.
+   *
+   * Every role requires a different (meaning separately-maintained) password from each other role.
+   * 
    */
-  const http_roletype = http_credentials[1];
-  switch (http_roletype) {
-    case 'view':
-    case 'main':
-    case 'edit':
-    case 'root':
-      break;
-    default:
-      res.status(StatusCodes.FORBIDDEN).send();
-  }
 
-  // Check the database if the user exists.
-  let db_stored: any;
-  try {
-    assert(globals.db !== undefined);
-    db_stored = globals.db.get('SELECT * FROM User WHERE username = ?', http_username);
-  } catch (err) {
-    assert(err instanceof Error);
-    throw new AppError('Unable to retrieve user from database.', { is_fatal: true, is_wrapper: true, original: err });
-  }
-
-  // If the user does not exist, return a 403.
-  if (db_stored === undefined) {
-    res.status(StatusCodes.FORBIDDEN).send();
-  }
-
-  // Allows passing the credentials to the route handler(s).
-  // See types/express/index.d.ts for what allows the request object to be extended to include this.
-  // The route handlers provide authorization, whereas this particular middleware strictly only provides authentication.
-  req.credentials = {
-    username: http_username,
-    roletype: http_roletype,
-    password: http_password,
-  };
-
-  // Skip requiring password the correct password for localhost.
-  if ((req.socket.remoteAddress === '127.0.0.1') || (req.socket.remoteAddress === '::1')) {
-    return next();
-  }
-
-  // Retrieve the password from the database based on the authorization level requested by the user.
   let db_password;
-  switch (http_roletype) {
-    case 'view':
-      db_password = db_stored.view_password;
-      break;
-    case 'main':
-      db_password = db_stored.main_password;
-      break;
-    case 'edit':
-      db_password = db_stored.edit_password;
-      break;
-    case 'root':
-      db_password = db_stored.root_password;
-      break;
-  }
-
-  // If the user does not have a password set for the requested authorization level, return a 403.
-  if (db_password === undefined) {
-    res.status(StatusCodes.FORBIDDEN).send();
+  try {
+    db_password = (await globals.db.get('SELECT password FROM Principal WHERE user_id = ? AND role = ?', db_user_id, http_roletype)).password;
+  } catch (err) {
+    logger.error(`User "${http_username}" tried to authorize with the role "${http_roletype}", which they do not have.`);
+    return res.status(StatusCodes.FORBIDDEN).send();
   }
 
   // Check the password of the user matches the correct one in the database via. bcrypt.
-  if (await bcrypt.compare(db_password, http_password)) {
+  if (await bcrypt.compare(http_password, db_password)) {
+    // Allows passing the credentials to the route handler(s).
+    // See types/express/index.d.ts for what allows the request object to be extended to include this.
+    // The route handlers provide authorization, whereas this particular middleware strictly only provides authentication.
+    req.credentials = {
+      username: http_username,
+      roletype: http_roletype,
+      password: http_password,
+    };
+
+    // The user is now authenticated.
     return next();
   }
 
   // If the password does not match, return a 403.
-  res.status(StatusCodes.FORBIDDEN).send();
+  logger.error(`User "${http_username}" tried to authenticate with an incorrect password.`);
+  return res.status(StatusCodes.FORBIDDEN).send();
 };

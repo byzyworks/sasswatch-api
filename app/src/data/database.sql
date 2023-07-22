@@ -1,10 +1,15 @@
 CREATE TABLE IF NOT EXISTS User (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT NOT NULL UNIQUE,
-  view_password TEXT,
-  main_password TEXT,
-  edit_password TEXT,
-  root_password TEXT
+  name TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS Principal (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  role TEXT NOT NULL,
+  password TEXT NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES User(id),
+  CONSTRAINT unique_role UNIQUE (user_id, role)
 );
 
 CREATE TABLE IF NOT EXISTS Calendar (
