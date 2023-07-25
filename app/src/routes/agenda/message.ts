@@ -1,8 +1,12 @@
-import express from 'express';
+import { strict as assert } from 'assert';
 
-import { globals } from '../../utility/common.js';
+import { HttpStatusCode } from 'axios';
+import express            from 'express';
 
-export const routes = express.Router();
+import { authorizeRoute } from '../../authorizer.js';
+import { globals }        from '../../utility/common.js';
+
+export const routes = express.Router({ mergeParams: true });
 
 /**
  * Attach an existing message to an existing agenda (admin or same-user-as-owner minimum editor authorization required).
@@ -10,13 +14,17 @@ export const routes = express.Router();
  *
  * @param {number} req.params.id - The ID of the message to attach to the agenda (required).
  */
-routes.post('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+routes.put('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Ok).send();
 });
 
 /**
  * Detach an existing message from an existing schedule agenda (admin or same-user-as-owner minimum editor authorization required).
  */
 routes.delete('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+  
+  return res.status(HttpStatusCode.NoContent).send();
 });

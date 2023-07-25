@@ -1,10 +1,12 @@
 import { strict as assert } from 'assert';
 
-import express from 'express';
+import { HttpStatusCode } from 'axios';
+import express            from 'express';
 
-import { globals }                 from '../../utility/common.js';
-import { routes as messageRoutes } from './message.js';
-//import { routes as trapRoutes }    from './trap';
+import { authorizeResource, authorizeRoute } from '../../authorizer.js';
+import { globals }                           from '../../utility/common.js';
+import { routes as messageRoutes }           from './message.js';
+//import { routes as trapRoutes }              from './trap';
 
 interface Message {
   id:    number;
@@ -12,9 +14,10 @@ interface Message {
 }
 
 interface Agenda {
-  id:       number;
-  parent?:  number;
-  owner:    string;
+  id:      number;
+  parent?: number;
+  owner:   string;
+  title?:  string;
   cron: {
     active: string;
     expire: string;
@@ -23,15 +26,16 @@ interface Agenda {
   children?: Agenda[];
 }
 
-export const routes = express.Router();
+export const routes = express.Router({ mergeParams: true });
 
 /**
- * Resource-level authorization middleware for agenda routes.
+ * Does resource-level authorization for agenda routes.
  * 
- * Makes sure the authenticated user is authorized as an admin, or owns the message being accessed and is using the appropriate authorization for the given endpoint.
+ * In other words, this is for discretionary authorization that depends on the user's ownership rights.
+ * Role-specific route authorization has to be handled at each route.
  */
-routes.use('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return next();
+routes.use('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  !authorizeResource(req, 'Agenda') && res.status(HttpStatusCode.Forbidden).send();
 });
 
 /**
@@ -45,7 +49,7 @@ routes.use('/:id/message', messageRoutes);
  * They are configured per agenda, which then gets tied to specific calendars and events.
  * As of currently, all notifications are pull/polling-based, but it makes sense for this to change in the future.
  */
-//routes.use('/:id/trap', trapRoutes);
+//routes.all('/:id/trap', trapRoutes);
 
 /**
  * Deep-retrieve a specific agenda from the database (admin or same-user-as-owner minimum editor authorization required).
@@ -56,7 +60,9 @@ routes.use('/:id/message', messageRoutes);
  * @returns {Agenda} The agenda object with its messages and child sub-agendas.
  */
 routes.get('/deep/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Ok).send();
 });
 
 /**
@@ -68,10 +74,12 @@ routes.get('/deep/:id', async (req: express.Request, res: express.Response, next
  * @returns {Agenda} The agenda object with its messages and the ID of its parent.
  */
 routes.get('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
   try {
     assert(globals.db !== undefined);
     const row = globals.db.get('SELECT * FROM Agenda WHERE id = ?', req.params.id);
-    return res.status(200).json(row);
+    return res.status(HttpStatusCode.Ok).json(row);
   } catch (err) {
     return next(err);
   }
@@ -83,10 +91,12 @@ routes.get('/:id', async (req: express.Request, res: express.Response, next: exp
  * @returns {Agenda[]} An array of agenda objects, with message lists ommitted.
  */
 routes.get('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
   try {
     assert(globals.db !== undefined);
     const rows = globals.db.all('SELECT * FROM Agenda');
-    return res.status(200).json(rows);
+    return res.status(HttpStatusCode.Ok).json(rows);
   } catch (err) {
     return next(err);
   }
@@ -101,7 +111,9 @@ routes.get('/', async (req: express.Request, res: express.Response, next: expres
  * @returns {Agenda} The new agenda with its ID for further customization.
  */
 routes.post('/deep/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Created).send();
 });
 
 /**
@@ -113,7 +125,9 @@ routes.post('/deep/:id', async (req: express.Request, res: express.Response, nex
  * @returns {Agenda} The new agenda with its ID for further customization.
  */
 routes.post('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Created).send();
 });
 
 /**
@@ -125,7 +139,9 @@ routes.post('/:id', async (req: express.Request, res: express.Response, next: ex
  * @returns {Agenda} The new agenda with its ID for further customization.
  */
 routes.post('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Created).send();
 });
 
 /**
@@ -139,7 +155,9 @@ routes.post('/', async (req: express.Request, res: express.Response, next: expre
  * @param {number} req.body.parent - The ID of the parent agenda (required).
  */
 routes.put('/:id/parent', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Ok).send();
 });
 
 /**
@@ -151,7 +169,9 @@ routes.put('/:id/parent', async (req: express.Request, res: express.Response, ne
  * @param {string} req.body.cron - The cron expression for when the agenda should activate (required).
  */
 routes.put('/:id/cron/active', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Ok).send();
 });
 
 /**
@@ -163,7 +183,9 @@ routes.put('/:id/cron/active', async (req: express.Request, res: express.Respons
  * @param {string} req.body.cron - The cron expression for when the agenda should expire (required).
  */
 routes.put('/:id/cron/expire', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Ok).send();
 });
 
 /**
@@ -172,7 +194,9 @@ routes.put('/:id/cron/expire', async (req: express.Request, res: express.Respons
  * @param {number} req.params.id - The ID of the agenda's parent to remove (required).
  */
 routes.delete('/:id/parent', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.NoContent).send();
 });
 
 /**
@@ -181,7 +205,9 @@ routes.delete('/:id/parent', async (req: express.Request, res: express.Response,
  * @param {number} req.params.id - The ID of the agenda's expiring cron expression to remove (required).
  */
 routes.delete('/:id/cron/expire', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.NoContent).send();
 });
 
 /**
@@ -194,7 +220,9 @@ routes.delete('/:id/cron/expire', async (req: express.Request, res: express.Resp
  * @param {number} req.params.id - The ID of the agenda to delete (required).
  */
 routes.delete('/deep/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.NoContent).send();
 });
 
 /**
@@ -207,5 +235,7 @@ routes.delete('/deep/:id', async (req: express.Request, res: express.Response, n
  * @param {number} req.params.id - The ID of the agenda to delete (required).
  */
 routes.delete('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+  
+  return res.status(HttpStatusCode.NoContent).send();
 });

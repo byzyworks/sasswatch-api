@@ -1,8 +1,12 @@
-import express from 'express';
+import { strict as assert } from 'assert';
 
-import { globals }                from '../../utility/common.js';
-import { routes as agendaRoutes } from './agenda.js';
-import { routes as eventRoutes }  from './event.js';
+import { HttpStatusCode } from 'axios';
+import express            from 'express';
+
+import { authorizeResource, authorizeRoute } from '../../authorizer.js';
+import { globals }                           from '../../utility/common.js';
+import { routes as agendaRoutes }            from './agenda.js';
+import { routes as eventRoutes }             from './event.js';
 
 interface Event {
   id:        number;
@@ -17,18 +21,20 @@ interface Event {
 interface Calendar {
   id:      number;
   owner:   string;
+  title?:  string;
   events?: Event[];
 }
 
-export const routes = express.Router();
+export const routes = express.Router({ mergeParams: true });
 
 /**
- * Resource-level authorization middleware for calendar routes.
- *
- * Makes sure the authenticated user is authorized as an admin, or owns the message being accessed and is using the appropriate authorization for the given endpoint.
+ * Does resource-level authorization for calendar and event routes.
+ * 
+ * In other words, this is for discretionary authorization that depends on the user's ownership rights.
+ * Role-specific route authorization has to be handled at each route.
  */
-routes.use('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return next();
+routes.use('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  !authorizeResource(req, 'Calendar') && res.status(HttpStatusCode.Forbidden).send();
 });
 
 /**
@@ -54,7 +60,9 @@ routes.use('/:id/event', eventRoutes);
  * @returns {Calendar} The calendar object.
  */
 routes.get('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['view', 'main', 'edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Ok).send();
 });
 
 /**
@@ -66,7 +74,9 @@ routes.get('/:id', async (req: express.Request, res: express.Response, next: exp
  * @returns {Calendar[]} An array of calendar objects, with event list ommitted.
  */
 routes.get('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['view', 'main', 'edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Ok).send();
 });
 
 /**
@@ -77,18 +87,10 @@ routes.get('/', async (req: express.Request, res: express.Response, next: expres
  *
  * @returns {Calendar} The new calendar with its ID for further customization.
  */
-routes.post('/clone/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
-});
-
-/**
- * Refresh an existing calendar (admin or same-user-as-owner minimum editor authorization required).
- * Both are the same operation, but refreshing involves using an existing ID (overwriting the existing calendar).
- *
- * @param {number} req.params.id - The ID of the calendar to refresh (optional).
- */
 routes.post('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Created).send();
 });
 
 /**
@@ -98,7 +100,21 @@ routes.post('/:id', async (req: express.Request, res: express.Response, next: ex
  * @returns {Calendar} The new calendar with its ID for further customization.
  */
 routes.post('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Created).send();
+});
+
+/**
+ * Refresh an existing calendar (admin or same-user-as-owner minimum editor authorization required).
+ * Both are the same operation, but refreshing involves using an existing ID (overwriting the existing calendar).
+ *
+ * @param {number} req.params.id - The ID of the calendar to refresh (optional).
+ */
+routes.put('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Ok).send();
 });
 
 /**
@@ -106,5 +122,7 @@ routes.post('/', async (req: express.Request, res: express.Response, next: expre
  * Deleting a calendar will also delete all associated events.
  */
 routes.delete('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+  
+  return res.status(HttpStatusCode.NoContent).send();
 });

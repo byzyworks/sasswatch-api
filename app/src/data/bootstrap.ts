@@ -43,11 +43,11 @@ export const boostrap = async () => {
   const root_password = await bcrypt.hash(root_username, 10);
 
   // Cron is an internal user created specifically for Cron to interact with this application using.
-  const cron_username        = 'cron';
-  const cron_rolename        = 'cron';
-  const cron_password_plain  = crypto.randomBytes(32).toString('hex');
-  const cron_password_hashed = await bcrypt.hash(cron_password_plain, 10);
-  const cron_password_path   = __dirname + '.sasspass';
+  const cron_username       = 'cron';
+  const cron_rolename       = 'cron';
+  const cron_password_plain = crypto.randomBytes(32).toString('hex');
+  const cron_password_hash  = await bcrypt.hash(cron_password_plain, 10);
+  const cron_password_path  = __dirname + '.sasspass';
   
   let result;
   try {
@@ -66,7 +66,7 @@ export const boostrap = async () => {
       await db.run('INSERT INTO User (name) VALUES (?)', cron_username);
 
       const id = (await db.get('SELECT id FROM User WHERE name = ?', cron_username)).id;
-      await db.run('INSERT INTO Principal (user_id, role, password) VALUES (?, ?, ?)', id, cron_rolename, cron_password_hashed);
+      await db.run('INSERT INTO Principal (user_id, role, password) VALUES (?, ?, ?)', id, cron_rolename, cron_password_hash);
     }
   } catch (err) {
     assert(err instanceof Error);

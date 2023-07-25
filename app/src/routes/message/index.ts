@@ -1,8 +1,12 @@
-import express from 'express';
+import { strict as assert } from 'assert';
 
-import { globals } from '../utility/common.js';
+import { HttpStatusCode } from 'axios';
+import express            from 'express';
 
-export const routes = express.Router();
+import { authorizeResource, authorizeRoute } from '../../authorizer.js';
+import { globals }                           from '../../utility/common.js';
+
+export const routes = express.Router({ mergeParams: true });
 
 interface Message {
   id:       number;
@@ -12,12 +16,13 @@ interface Message {
 }
 
 /**
- * Resource-level authorization middleware for message routes.
- *
- * Makes sure the authenticated user is authorized as an admin, or owns the message being accessed and is using the appropriate authorization for the given endpoint.
+ * Does resource-level authorization for message routes.
+ * 
+ * In other words, this is for discretionary authorization that depends on the user's ownership rights.
+ * Role-specific route authorization has to be handled at each route.
  */
-routes.use('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return next();
+routes.use('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  !authorizeResource(req, 'Message') && res.status(HttpStatusCode.Forbidden).send();
 });
 
 /**
@@ -28,7 +33,9 @@ routes.use('/', async (req: express.Request, res: express.Response, next: expres
  * @returns {Message} The message object.
  */
 routes.get('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Ok).send();
 });
 
 /**
@@ -39,7 +46,9 @@ routes.get('/:id', async (req: express.Request, res: express.Response, next: exp
  * @returns {Message[]} An array of message objects, with payloads ommitted.
  */
 routes.get('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Ok).send();
 });
 
 /**
@@ -51,7 +60,9 @@ routes.get('/', async (req: express.Request, res: express.Response, next: expres
  * @returns {Message} The new message with its ID for further customization.
  */
 routes.post('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Created).send();
 });
 
 /**
@@ -61,7 +72,9 @@ routes.post('/', async (req: express.Request, res: express.Response, next: expre
  * @param {string} req.body.title - A short description of the message displayed when not being retrieved specifically, such as when displaying the calendar (required).
  */
 routes.put('/:id/title', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Ok).send();
 });
 
 /**
@@ -71,7 +84,21 @@ routes.put('/:id/title', async (req: express.Request, res: express.Response, nex
  * @param {any} req.body.payload - Any bit of information that the message will have as a payload, which is of an arbitrary format (required).
  */
 routes.put('/:id/payload', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Ok).send();
+});
+
+/**
+ * Edit an existing message's weight in the database (admin or same-user-as-owner minimum editor authorization required).
+ * All events associated to this message will also be affected.
+ *
+ * @param {string} req.body.weight - The number of times an event with this message can exist in a calendar before new events are ignored, where 0 or lower means no limit (required).
+ */
+routes.put('/:id/weight', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.Ok).send();
 });
 
 /**
@@ -79,7 +106,9 @@ routes.put('/:id/payload', async (req: express.Request, res: express.Response, n
  * All events associated to this message will also be affected.
  */
 routes.delete('/:id/payload', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.NoContent).send();
 });
 
 /**
@@ -87,5 +116,7 @@ routes.delete('/:id/payload', async (req: express.Request, res: express.Response
  * This will also delete all associated events that link back to this message.
  */
 routes.delete('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(200).send();
+  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+
+  return res.status(HttpStatusCode.NoContent).send();
 });

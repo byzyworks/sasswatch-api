@@ -1,8 +1,8 @@
 import { strict as assert } from 'assert';
 
-import bcrypt          from 'bcrypt';
-import express         from 'express';
-import { StatusCodes } from 'http-status-codes';
+import { HttpStatusCode } from 'axios';
+import bcrypt             from 'bcrypt';
+import express            from 'express';
 
 import { globals }  from './utility/common.js';
 import { AppError } from './utility/error.js';
@@ -14,12 +14,12 @@ import { logger }   from './utility/logger.js';
  *
  * @param {string} req.headers.authorization - The HTTP Authorization header, which should be in the format "Basic <base64-encoded username:roletype:password>".
  */
-export const authenticator = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export const authenticateUser = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   // Rule out any invalid requests.
   const token = (req.headers.authorization || '').split(' ')[1] || '';
   if (token === undefined) {
     logger.error(`Invalid authorization token sent.`);
-    return res.status(StatusCodes.FORBIDDEN).send();
+    return res.status(HttpStatusCode.BadRequest).send();
   }
 
   // Decode the HTTP Basic Auth token.
@@ -33,15 +33,19 @@ export const authenticator = async (req: express.Request, res: express.Response,
   assert(globals.db !== undefined);
 
   // Check the database if the user exists.
-  let db_user_id;
-  try {
-    db_user_id = (await globals.db.get('SELECT id FROM User WHERE name = ?', http_username)).id;
-  } catch (err) {
+  const db_user = await globals.db.get('SELECT id, is_enabled FROM User WHERE name = ?', http_username);
+  if (db_user === undefined) {
     logger.error(`Invalid username "${http_username}".`);
-    return res.status(StatusCodes.FORBIDDEN).send();
+    return res.status(HttpStatusCode.Forbidden).send();
   }
 
-    /**
+  // Check if the user is enabled.
+  if (db_user.is_enabled !== 1) {
+    logger.error(`User "${http_username}" tried to authenticate but this user is disabled.`);
+    return res.status(HttpStatusCode.Forbidden).send();
+  }
+
+  /**
    * The roletype is the authorization type requested by the user.
    * These are the role types that are currently supported by the application:
    *
@@ -57,16 +61,21 @@ export const authenticator = async (req: express.Request, res: express.Response,
    * 
    */
 
-  let db_password;
-  try {
-    db_password = (await globals.db.get('SELECT password FROM Principal WHERE user_id = ? AND role = ?', db_user_id, http_roletype)).password;
-  } catch (err) {
+  // Check if the user has the role requested.
+  const db_principal = await globals.db.get('SELECT password, is_enabled FROM Principal WHERE user_id = ? AND role = ?', db_user.id, http_roletype);
+  if (db_principal === undefined) {
     logger.error(`User "${http_username}" tried to authorize with the role "${http_roletype}", which they do not have.`);
-    return res.status(StatusCodes.FORBIDDEN).send();
+    return res.status(HttpStatusCode.Forbidden).send();
   }
 
-  // Check the password of the user matches the correct one in the database via. bcrypt.
-  if (await bcrypt.compare(http_password, db_password)) {
+  // Check if the role is enabled for the user, even if they have it.
+  if (db_principal.is_enabled !== 1) {
+    logger.error(`User "${http_username}" tried to authenticate with the role "${http_roletype}", but this role is disabled for the user.`);
+    return res.status(HttpStatusCode.Forbidden).send();
+  }
+
+  // Check the password of the user for their role matches the correct one in the database via. bcrypt.
+  if (await bcrypt.compare(http_password, db_principal.password)) {
     // Allows passing the credentials to the route handler(s).
     // See types/express/index.d.ts for what allows the request object to be extended to include this.
     // The route handlers provide authorization, whereas this particular middleware strictly only provides authentication.
@@ -82,5 +91,5 @@ export const authenticator = async (req: express.Request, res: express.Response,
 
   // If the password does not match, return a 403.
   logger.error(`User "${http_username}" tried to authenticate with an incorrect password.`);
-  return res.status(StatusCodes.FORBIDDEN).send();
+  return res.status(HttpStatusCode.Forbidden).send();
 };

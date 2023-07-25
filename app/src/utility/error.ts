@@ -1,5 +1,5 @@
+import { HttpStatusCode }    from 'axios';
 import { Request, Response } from 'express';
-import { StatusCodes }       from 'http-status-codes';
 
 import { logger } from './logger.js';
 
@@ -27,7 +27,7 @@ interface DevelopmentErrorResponse {
 }
 
 export class AppError<T extends AppErrorOptions> extends Error {
-    constructor(message: string, public readonly options?: T) {
+    constructor(message: string, public readonly options: T = { } as T) {
         super(message);
         this.name = 'AppError';
         Object.setPrototypeOf(this, new.target.prototype);
@@ -79,7 +79,7 @@ class ErrorHandler {
         if ((this.lastError instanceof AppError) && (this.lastError.options.http_code !== undefined)) {
             status = this.lastError.options.http_code;
         } else {
-            status = StatusCodes.INTERNAL_SERVER_ERROR;
+            status = HttpStatusCode.InternalServerError;
         }
 
         response.status(status);

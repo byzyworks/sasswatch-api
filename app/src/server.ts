@@ -1,7 +1,7 @@
 import express from 'express';
 import helmet  from 'helmet';
 
-import { authenticator }      from './authenticator.js';
+import { authenticateUser }   from './authenticator.js';
 import { boostrap }           from './data/bootstrap.js';
 import { globals }            from './utility/common.js';
 import { routes }             from './routes/index.js';
@@ -38,9 +38,9 @@ export const server = async () => {
   globals.db = await boostrap();
 
   // Our app's logic:
-  app.use(authenticator);
+  app.use(authenticateUser);
   app.use(routes);
-  app.use(error_handler.errorResponse);
+  app.use(error_handler.handle);
   //app.use(migrator);
 
   // Up goes the servers.
