@@ -33,6 +33,10 @@ program
       .conflicts('ipv4Only')
   )
   .addOption(
+    new Option('-d, --debug', 'Enable debug logging output.')
+      .conflicts('verbose')
+  )
+  .addOption(
     new Option('-L, --localhost', 'Bind only to localhost; do not expose raw service to the network.')
   )
   .addOption(
@@ -58,11 +62,15 @@ program
   */
   .addOption(
     new Option('-v, --verbose', 'Enable verbose logging output.')
+      .conflicts('debug')
   )
   .hook('preAction', async () => {
     const options = program.opts();
 
     if (options.verbose) {
+      transports.console.level = 'verbose';
+      logger.verbose('Console log level set to verbose.');
+    } else if (options.debug) {
       transports.console.level = 'debug';
       logger.verbose('Console log level set to debugging.');
     }
