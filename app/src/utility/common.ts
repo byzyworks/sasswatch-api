@@ -6,3 +6,13 @@ interface Globals {
 }
 
 export const globals: Globals = { };
+
+export enum UserRole {
+    Viewer       = 'view',
+    Maintainer   = 'main',
+    Editor       = 'edit',
+    Admin        = 'root',
+    Cron         = 'cron',
+    BasicAuditor = 'read',
+    AdminAuditor = 'audt',
+}

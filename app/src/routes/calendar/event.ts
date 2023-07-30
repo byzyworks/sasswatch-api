@@ -3,7 +3,7 @@ import { strict as assert } from 'assert';
 import { HttpStatusCode } from 'axios';
 import express            from 'express';
 
-import { authorizeRoute } from '../../authorizer.js';
+import { authorizeRoute } from '../common.js';
 import { globals }        from '../../utility/common.js';
 
 interface Event {
@@ -33,7 +33,9 @@ export const routes = express.Router({ mergeParams: true });
  * @returns {Event} The event object.
  */
 routes.get('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  !authorizeRoute(req, ['view', 'main', 'edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+  if (!(await authorizeRoute(req, ['view', 'main', 'edit', 'root', 'read', 'audt']))) {
+    return res.status(HttpStatusCode.Forbidden).send();
+  }
 
   return res.status(HttpStatusCode.Ok).send();
 });
@@ -48,7 +50,9 @@ routes.get('/:id', async (req: express.Request, res: express.Response, next: exp
  * @returns {Event[]} An array of event objects, with agenda list and payloads ommitted.
  */
 routes.get('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+  if (!(await authorizeRoute(req, ['edit', 'root', 'read', 'audt']))) {
+    return res.status(HttpStatusCode.Forbidden).send();
+  }
 
   return res.status(HttpStatusCode.Ok).send();
 });
@@ -63,7 +67,9 @@ routes.get('/', async (req: express.Request, res: express.Response, next: expres
  * Beware, however, this will cause the agendas to branch off.
  */
 //routes.post('/transformer/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-//  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+//  if (!(await authorizeRoute(req, ['edit', 'root']))) {
+//    return res.status(HttpStatusCode.Forbidden).send();
+//  }
 //
 //  return res.status(HttpStatusCode.Ok).send();
 //});
@@ -82,7 +88,9 @@ routes.get('/', async (req: express.Request, res: express.Response, next: expres
  * @param {number} req.body.message     - The ID of the message that the event uses for its title and payload (required).
  */
 routes.post('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  !authorizeRoute(req, ['cron']) && res.status(HttpStatusCode.Forbidden).send();
+  if (!(await authorizeRoute(req, ['cron']))) {
+    return res.status(HttpStatusCode.Forbidden).send();
+  }
 
   return res.status(HttpStatusCode.Created).send();
 });
@@ -95,7 +103,9 @@ routes.post('/', async (req: express.Request, res: express.Response, next: expre
  * @param {number} req.params.id - The ID of the event to delete (required).
  */
 routes.delete('/recurrent/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+  if (!(await authorizeRoute(req, ['edit', 'root']))) {
+    return res.status(HttpStatusCode.Forbidden).send();
+  }
 
   return res.status(HttpStatusCode.NoContent).send();
 });
@@ -109,7 +119,9 @@ routes.delete('/recurrent/:id', async (req: express.Request, res: express.Respon
  * @param {number} req.params.id - The ID of the event to acknowledge (required).
  */
 routes.delete('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  !authorizeRoute(req, ['main', 'edit', 'root', 'cron']) && res.status(HttpStatusCode.Forbidden).send();
+  if (!(await authorizeRoute(req, ['main', 'edit', 'root', 'cron']))) {
+    return res.status(HttpStatusCode.Forbidden).send();
+  }
 
   return res.status(HttpStatusCode.NoContent).send();
 });

@@ -75,17 +75,40 @@ CREATE TABLE IF NOT EXISTS Agenda (
     ON DELETE SET NULL
 );
 
+CREATE VIEW IF NOT EXISTS v_User_Agenda AS
+  SELECT
+    a.id AS id,
+    u.name AS owner,
+    a.parent_id AS parent,
+    a.title AS title,
+    a.active_cron AS active_cron,
+    a.expire_cron AS expire_cron
+  FROM User u
+  INNER JOIN Agenda a ON u.id = a.owner_id
+;
+
 CREATE TABLE IF NOT EXISTS Message (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  weight INTEGER NOT NULL DEFAULT 1,
   title TEXT NOT NULL,
   payload TEXT,
-  weight INTEGER NOT NULL DEFAULT 1,
   owner_id INTEGER NOT NULL,
   CONSTRAINT fk_owner_id
     FOREIGN KEY (owner_id)
     REFERENCES User(id)
     ON DELETE CASCADE
 );
+
+CREATE VIEW IF NOT EXISTS v_User_Message AS
+  SELECT
+    m.id AS id,
+    u.name AS owner,
+    m.weight AS weight,
+    m.title AS title,
+    m.payload AS payload
+  FROM User u
+  INNER JOIN Message m ON u.id = m.owner_id
+;
 
 /**
 * Agendas can have multiple messages tied to them, just as messages can be re-used across multiple agendas.
@@ -104,6 +127,16 @@ CREATE TABLE IF NOT EXISTS Agenda_Message (
   CONSTRAINT pk_agenda_message
     PRIMARY KEY (agenda_id, message_id)
 );
+
+CREATE VIEW IF NOT EXISTS v_Agenda_Message AS
+  SELECT
+    am.agenda_id AS agenda,
+    m.weight AS weight,
+    m.title AS title,
+    m.payload AS payload
+  FROM Agenda_Message am
+  INNER JOIN Message m ON am.message_id = m.id
+;
 
 CREATE TABLE IF NOT EXISTS Event (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -147,6 +180,7 @@ CREATE VIEW IF NOT EXISTS v_Event_Message AS
     c.calendar_id AS calendar_id,
     e.active_time AS active_time,
     e.expire_time AS expire_time,
+    m.weight AS weight,
     m.title AS title,
     m.payload AS payload
   FROM Event e

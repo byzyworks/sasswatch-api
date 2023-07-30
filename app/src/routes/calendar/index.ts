@@ -3,7 +3,7 @@ import { strict as assert } from 'assert';
 import { HttpStatusCode } from 'axios';
 import express            from 'express';
 
-import { authorizeResource, authorizeRoute } from '../../authorizer.js';
+import { authorizeResource, authorizeRoute } from '../common.js';
 import { globals }                           from '../../utility/common.js';
 import { routes as agendaRoutes }            from './agenda.js';
 import { routes as eventRoutes }             from './event.js';
@@ -34,7 +34,11 @@ export const routes = express.Router({ mergeParams: true });
  * Role-specific route authorization has to be handled at each route.
  */
 routes.use('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  !authorizeResource(req, 'Calendar') && res.status(HttpStatusCode.Forbidden).send();
+  if (await authorizeResource(req, 'Calendar')) {
+    return next();
+  }
+
+  return res.status(HttpStatusCode.Forbidden).send();
 });
 
 /**
@@ -60,7 +64,9 @@ routes.use('/:id/event', eventRoutes);
  * @returns {Calendar} The calendar object.
  */
 routes.get('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  !authorizeRoute(req, ['view', 'main', 'edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+  if (!(await authorizeRoute(req, ['view', 'main', 'edit', 'root', 'read', 'audt']))) {
+    return res.status(HttpStatusCode.Forbidden).send();
+  }
 
   return res.status(HttpStatusCode.Ok).send();
 });
@@ -74,7 +80,9 @@ routes.get('/:id', async (req: express.Request, res: express.Response, next: exp
  * @returns {Calendar[]} An array of calendar objects, with event list ommitted.
  */
 routes.get('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  !authorizeRoute(req, ['view', 'main', 'edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+  if (!(await authorizeRoute(req, ['view', 'main', 'edit', 'root', 'read', 'audt']))) {
+    return res.status(HttpStatusCode.Forbidden).send();
+  }
 
   return res.status(HttpStatusCode.Ok).send();
 });
@@ -88,7 +96,9 @@ routes.get('/', async (req: express.Request, res: express.Response, next: expres
  * @returns {Calendar} The new calendar with its ID for further customization.
  */
 routes.post('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+  if (!(await authorizeRoute(req, ['edit', 'root']))) {
+    return res.status(HttpStatusCode.Forbidden).send();
+  }
 
   return res.status(HttpStatusCode.Created).send();
 });
@@ -100,7 +110,9 @@ routes.post('/:id', async (req: express.Request, res: express.Response, next: ex
  * @returns {Calendar} The new calendar with its ID for further customization.
  */
 routes.post('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+  if (!(await authorizeRoute(req, ['edit', 'root']))) {
+    return res.status(HttpStatusCode.Forbidden).send();
+  }
 
   return res.status(HttpStatusCode.Created).send();
 });
@@ -112,7 +124,9 @@ routes.post('/', async (req: express.Request, res: express.Response, next: expre
  * @param {number} req.params.id - The ID of the calendar to refresh (optional).
  */
 routes.put('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+  if (!(await authorizeRoute(req, ['edit', 'root']))) {
+    return res.status(HttpStatusCode.Forbidden).send();
+  }
 
   return res.status(HttpStatusCode.Ok).send();
 });
@@ -122,7 +136,9 @@ routes.put('/:id', async (req: express.Request, res: express.Response, next: exp
  * Deleting a calendar will also delete all associated events.
  */
 routes.delete('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+  if (!(await authorizeRoute(req, ['edit', 'root']))) {
+    return res.status(HttpStatusCode.Forbidden).send();
+  }
   
   return res.status(HttpStatusCode.NoContent).send();
 });

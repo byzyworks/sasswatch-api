@@ -49,11 +49,13 @@ export const authenticateUser = async (req: express.Request, res: express.Respon
    * The roletype is the authorization type requested by the user.
    * These are the role types that are currently supported by the application:
    *
-   * "view" - View access         - Permits read-only access to the user's calendars and events.
+   * "view" - View access         - Permits read-only access to the user's calendars and events. Agendas and messages are not necessary for normal viewing.
    * "main" - Maintainence access - Permits read access to the user's calendars and events, with the ability to acknowledge/delete singular events, clearing them out.
-   * "edit" - Edit access         - Permits read-write access to all of the user's owned assets, including their calendars, events, template agendas, and messages.
+   * "edit" - Edit access         - Permits read-write access to all of the user's owned assets, including their calendars, events, agendas, and messages.
    * "root" - Admin access        - Permits read-write access to all assets, regardless of ownership. Unrestricted. Use with caution.
    * "cron" - Crontab access      - Permits adding and deleting individual events only. Specifically for Cron, i.e. internal use only.
+   * "read" - User audit access   - Permits read-only access to all of the user's owned assets, including their calendars, events, agendas, and messages.
+   * "audt" - Admin audit access  - Permits read-only access to all assets, regardless of ownership.
    *
    * Anything else is automatically 403'd.
    *
@@ -80,6 +82,7 @@ export const authenticateUser = async (req: express.Request, res: express.Respon
     // See types/express/index.d.ts for what allows the request object to be extended to include this.
     // The route handlers provide authorization, whereas this particular middleware strictly only provides authentication.
     req.credentials = {
+      id:       db_user.id,
       username: http_username,
       roletype: http_roletype,
       password: http_password,

@@ -3,8 +3,9 @@ import { strict as assert } from 'assert';
 import { HttpStatusCode } from 'axios';
 import express            from 'express';
 
-import { authorizeRoute }       from '../../authorizer.js';
+import { authorizeRoute }       from '../common.js';
 import { globals }              from '../../utility/common.js';
+import { logger }               from '../../utility/logger.js';
 import { routes as roleRoutes } from './role.js';
 
 interface Asset {
@@ -28,15 +29,18 @@ export const routes = express.Router({ mergeParams: true });
  *
  * Makes sure the users being accessed are either the same user as the authenticated user, or that the authenticated user is authorized as an admin.
  * The user route has a custom authorizer since it the data lookup for usernames is slightly different than for resource ownership (that use user IDs).
+ * 
+ * @param {number} req.params.username The username of the user profile being accessed (required).
  */
 routes.use('/:username', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   // To prevent TypeScript from complaining even though these resources have already been initialized.
   assert(req.credentials !== undefined);
 
   // Allows access to all users when authorized as an admin.
-  const role = req.credentials.roletype;
-  if (role === 'root') {
-    return next();
+  switch (req.credentials.roletype) {
+    case 'root':
+    case 'audt':
+      return next();
   }
 
   // Non-admins only need to be able to access their own user profile.
@@ -52,6 +56,8 @@ routes.use('/:username', async (req: express.Request, res: express.Response, nex
 /**
  * Roles can be thought of as user sub-types.
  * Roles permit certain actions that do not necessarily cross-authenticate (use the same password).
+ * 
+ * @param {number} req.params.username The username of the user profile linked to those roles (required).
  */
 routes.use('/:username/role', roleRoutes);
 
@@ -124,7 +130,7 @@ const getAssets = async (owner_id: number, table: string): Promise<Asset[]> => {
  */
 routes.get('/:username', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   // Admin or same-user minimum view-only authorization required.
-  if (!(await authorizeRoute(req, ['view', 'main', 'edit', 'root']))) {
+  if (!(await authorizeRoute(req, ['view', 'main', 'edit', 'root', 'read', 'audt']))) {
     return res.status(HttpStatusCode.Forbidden).send();
   }
 
@@ -145,7 +151,7 @@ routes.get('/:username', async (req: express.Request, res: express.Response, nex
   user_profile.messages  = await getAssets(user_profile.id, 'Message');
 
   // Export the user information object.
-  return res.status(HttpStatusCode.Ok).send(user_profile);
+  return res.status(HttpStatusCode.Ok).json(user_profile);
 });
 
 /**
@@ -155,7 +161,7 @@ routes.get('/:username', async (req: express.Request, res: express.Response, nex
  */
 routes.get('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   // Admin authorization always required.
-  if (!(await authorizeRoute(req, ['root']))) {
+  if (!(await authorizeRoute(req, ['root', 'audt']))) {
     return res.status(HttpStatusCode.Forbidden).send();
   }
 
@@ -173,7 +179,7 @@ routes.get('/', async (req: express.Request, res: express.Response, next: expres
   }
 
   // Export the user list.
-  return res.status(HttpStatusCode.Ok).send(user_list);
+  return res.status(HttpStatusCode.Ok).json(user_list);
 });
 
 /**
@@ -185,6 +191,14 @@ routes.post('/', async (req: express.Request, res: express.Response, next: expre
   // Admin authorization always required.
   if (!(await authorizeRoute(req, ['root']))) {
     return res.status(HttpStatusCode.Forbidden).send();
+  }
+
+  //
+  try {
+    JSON.parse(req.body);
+  } catch (err) {
+    logger.error('Failed to parse request body; not a valid JSON object.');
+    return res.status(HttpStatusCode.BadRequest).send();
   }
 
   // The username must be supplied.

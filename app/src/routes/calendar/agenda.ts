@@ -3,7 +3,7 @@ import { strict as assert } from 'assert';
 import { HttpStatusCode } from 'axios';
 import express            from 'express';
 
-import { authorizeRoute } from '../../authorizer.js';
+import { authorizeRoute } from '../common.js';
 import { globals }        from '../../utility/common.js';
 
 export const routes = express.Router({ mergeParams: true });
@@ -16,7 +16,9 @@ export const routes = express.Router({ mergeParams: true });
  * @param {number} req.params.id - The ID of the agenda to attach to the calendar (required).
  */
 routes.put('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+  if (!(await authorizeRoute(req, ['edit', 'root']))) {
+    return res.status(HttpStatusCode.Forbidden).send();
+  }
 
   return res.status(HttpStatusCode.Ok).send();
 });
@@ -27,7 +29,9 @@ routes.put('/:id', async (req: express.Request, res: express.Response, next: exp
  * This is per calendar, and as such will have no effect on other calendars.
  */
 routes.delete('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  !authorizeRoute(req, ['edit', 'root']) && res.status(HttpStatusCode.Forbidden).send();
+  if (!(await authorizeRoute(req, ['edit', 'root']))) {
+    return res.status(HttpStatusCode.Forbidden).send();
+  }
 
   return res.status(HttpStatusCode.NoContent).send();
 });
