@@ -3,8 +3,8 @@ import { strict as assert } from 'assert';
 import { HttpStatusCode } from 'axios';
 import express            from 'express';
 
-import { authorizeResource, authorizeRoute } from '../common.js';
-import { globals }                           from '../../utility/common.js';
+import { authorizeResource, authorizeRoute } from '../../middleware/authorizeRoute.js';
+import { globals }                           from '../../services/auth/roles.js';
 import { routes as messageRoutes }           from './message.js';
 //import { routes as trapRoutes }              from './trap';
 

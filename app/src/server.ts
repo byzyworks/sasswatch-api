@@ -1,10 +1,8 @@
 import express from 'express';
 import helmet  from 'helmet';
 
-import { authenticateUser }   from './authenticator.js';
-import { boostrap }           from './data/bootstrap.js';
-import { globals }            from './utility/common.js';
-import { routes }             from './routes/index.js';
+import { authenticateUser }   from './middleware/authenticateUser.js';
+import { routes }             from './routes-old/index.js';
 import { error_handler }      from './utility/error.js';
 import { logger, httpLogger } from './utility/logger.js';
 
@@ -33,9 +31,6 @@ export const server = async () => {
   app.use(httpLogger);
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
-
-  // Initialize the database.
-  globals.db = await boostrap();
 
   // Our app's logic:
   app.use(authenticateUser);

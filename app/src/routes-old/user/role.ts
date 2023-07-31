@@ -4,8 +4,8 @@ import { HttpStatusCode } from 'axios';
 import bcrypt             from 'bcrypt';
 import express            from 'express';
 
-import { authorizeRoute } from '../common.js';
-import { globals }        from '../../utility/common.js';
+import { authorizeRoute } from '../../middleware/authorizeRoute.js';
+import { globals }        from '../../services/auth/roles.js';
 
 export const routes = express.Router({ mergeParams: true });
 

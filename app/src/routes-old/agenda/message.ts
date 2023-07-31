@@ -3,8 +3,8 @@ import { strict as assert } from 'assert';
 import { HttpStatusCode } from 'axios';
 import express            from 'express';
 
-import { authorizeRoute } from '../common.js';
-import { globals }        from '../../utility/common.js';
+import { authorizeRoute } from '../../middleware/authorizeRoute.js';
+import { globals }        from '../../services/auth/roles.js';
 
 export const routes = express.Router({ mergeParams: true });
 
