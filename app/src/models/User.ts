@@ -1,32 +1,63 @@
-import auth                        from '../services/auth/credentials.js';
-import db                          from '../services/data/database.js';
-import { AppError, error_handler } from '../utility/error.js';
-import { logger }                  from '../utility/logger.js';
+import { DataTypes, Model, InferAttributes, InferCreationAttributes, CreationOptional, Sequelize } from 'sequelize';
 
-interface IPrincipal {
-  name:     string;
-  password: string;
-  enabled:  boolean;
+import db from '../services/data/database.js';
+
+import Principal from './Principal.js';
+import Message   from './Message.js';
+import Agenda    from './Agenda.js';
+import Calendar  from './Calendar.js';
+
+class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
+  declare id:      CreationOptional<number>;
+  declare name:    string;
+  declare enabled: boolean;
 }
 
-interface IUser {
-  username: string;
-  roles:    IPrincipal[];
-  enabled:  boolean;
-}
-
-export class User {
-  constructor() { }
-
-  async insert(user: IUser) {
-    await db.run('INSERT INTO User (name) VALUES (?)', req.body.username);
+User.init({
+  id: {
+    type:          DataTypes.INTEGER.UNSIGNED,
+    allowNull:     false,
+    primaryKey:    true,
+    autoIncrement: true,
+  },
+  name: {
+    type:      DataTypes.STRING,
+    allowNull: false,
+    unique:    true,
+  },
+  enabled: {
+    type:         DataTypes.BOOLEAN,
+    allowNull:    false,
+    defaultValue: true,
   }
+},
+{
+  sequelize: db,
+  modelName: 'User',
+});
 
-  async update(id: number, user: IUser) {
+User.hasMany(Principal, {
+  foreignKey: 'user_id',
+  sourceKey:  'id',
+  onDelete:   'CASCADE',
+});
 
-  }
+User.hasMany(Message, {
+  foreignKey: 'owner_id',
+  sourceKey:  'id',
+  onDelete:   'CASCADE',
+});
 
-  async delete(id: number) {
-    
-  }
-}
+User.hasMany(Agenda, {
+  foreignKey: 'owner_id',
+  sourceKey:  'id',
+  onDelete:   'CASCADE',
+});
+
+User.hasMany(Calendar, {
+  foreignKey: 'owner_id',
+  sourceKey:  'id',
+  onDelete:   'CASCADE',
+});
+
+export default User;
