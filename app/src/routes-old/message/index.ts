@@ -9,6 +9,14 @@ import { logger }                            from '../../utility/logger.js';
 
 export const routes = express.Router({ mergeParams: true });
 
+interface Message {
+  id:       number;
+  owner?:   string;
+  weight:   number;
+  title:    string;
+  payload?: string;
+}
+
 /**
  * Does resource-level authorization for message routes.
  * 
