@@ -1,11 +1,4 @@
-
-import { Model, ModelStatic } from 'sequelize';
-
-import AgendaModel                 from '../models/Agenda.js';
-import CalendarModel               from '../models/Calendar.js';
-import MessageModel                from '../models/Message.js';
-import PrincipalModel              from '../models/Principal.js';
-import UserModel                   from '../models/User.js';
+import auth                        from '../services/auth/credentials.js';
 import db                          from '../services/data/database.js';
 import { AppError, error_handler } from '../utility/error.js';
 import { logger }                  from '../utility/logger.js';
@@ -21,29 +14,27 @@ interface NameSearchKey {
 // Note that getBasicUser() below depends on the keys here matching the column names in the database.
 type ISearchKey = IdSearchKey | NameSearchKey;
 
-interface IPrincipalView {
+interface IPrincipal {
   name:    string;
   enabled: boolean;
 }
 
-interface IAssetView {
+interface IAsset {
   id:     number;
   title?: string;
 }
 
-interface IUserView {
+interface IUser {
   id:         number;
   username:   string;
-  roles:      IPrincipalView[];
-  calendars?: IAssetView[];
-  agendas?:   IAssetView[];
-  messages?:  IAssetView[];
+  roles:      IPrincipal[];
+  calendars?: IAsset[];
+  agendas?:   IAsset[];
+  messages?:  IAsset[];
   enabled:    boolean;
 }
 
-type Asset = CalendarModel | AgendaModel | MessageModel;
-
-export class UserView {
+export class User {
   constructor() { }
 
   /**
@@ -53,43 +44,31 @@ export class UserView {
    * 
    * @returns The user object (passwords ommitted) or null if the user does not exist.
    */
-  private async getBasicUser(key: ISearchKey): Promise<IUserView | null> {
-    //
-    const user_raw = await UserModel.findOne({
-      where: {
-        [Object.keys(key)[0]]: Object.values(key)[0],
-      },
-    });
+  private async getBasicUser(key: ISearchKey): Promise<IUser | null> {
+    // Get the user's profile.
+    const user_raw = await db.get(`SELECT * FROM User WHERE ${Object.keys(key)[0]} = ?`, Object.values(key)[0]);
 
     // Check if the user exists, first.
-    if (user_raw === null) {
+    if (user_raw === undefined) {
       return null;
     }
 
     // Collect a list of the roles that the user has.
-    const user_roles: IPrincipalView[] = [ ];
-    const user_roles_raw = await PrincipalModel.findAll({
-      attributes: ['role', 'is_enabled'],
-      where: {
-        user_id: user_raw.id,
-      },
-      order: [
-        ['role', 'ASC'],
-      ]
-    });
+    const user_roles: IPrincipal[] = [ ];
+    const user_roles_raw = await db.all('SELECT role, is_enabled FROM Principal WHERE user_id = ? ORDER BY role', user_raw.id);
     for (const user_role_raw of user_roles_raw) {
       user_roles.push({
         name:    user_role_raw.role,
-        enabled: user_role_raw.enabled,
+        enabled: user_role_raw.is_enabled === 1
       });
     }
 
     // Compile the user information object.
-    const user: IUserView = {
+    const user: IUser = {
       id:       user_raw.id,
       username: user_raw.name,
       roles:    user_roles,
-      enabled:  user_raw.enabled,
+      enabled:  user_raw.is_enabled === 1
     };
 
     // Export the object.
@@ -100,21 +79,14 @@ export class UserView {
    * Gets asset information for a specific user using the common "grab by owner_id" method.
    * 
    * @param owner_id Username to come up with a list of assets for.
-   * @param model    The asset type itself identified by the SQL table name.
+   * @param table    The asset type itself identified by the SQL table name.
    * 
    * @returns The list of a particular set of assets owned by the user.
    */
-  private async getUserAssets(owner_id: number, model: Model): Promise<IAssetView[]> {
+  private async getUserAssets(owner_id: number, table: string): Promise<IAsset[]> {
     // Collect a list of the particular type of asset that the user has.
-    const assets: IAssetView[] = [ ];
-    const assets_raw = await model.findAll({
-      where: {
-        owner_id: owner_id,
-      },
-      order: [
-        ['title', 'ASC'],
-      ],
-    });
+    const assets: IAsset[] = [ ];
+    const assets_raw = await db.all(`SELECT * FROM ${table} WHERE owner_id = ? ORDER BY title`, owner_id);
     for (const asset_raw of assets_raw) {
       assets.push({
         id: asset_raw.id,
@@ -126,7 +98,7 @@ export class UserView {
     return assets;
   }
 
-  async select(key: ISearchKey): Promise<IUserView | null> {
+  async select(key: ISearchKey): Promise<IUser | null> {
     const user = await this.getBasicUser(key);
 
     if (user === null) {
@@ -140,8 +112,8 @@ export class UserView {
     return user;
   }
 
-  async selectAll(): Promise<IUserView[]> {
-    const users: IUserView[] = [ ];
+  async selectAll(): Promise<IUser[]> {
+    const users: IUser[] = [ ];
     const users_raw = await db.all('SELECT name FROM User ORDER BY name');
     for (const user_raw of users_raw) {
       //
