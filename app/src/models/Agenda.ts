@@ -1,4 +1,4 @@
-import { DataTypes, Model, InferAttributes, InferCreationAttributes, CreationOptional, ForeignKey } from 'sequelize';
+import { DataTypes, Model, InferAttributes, InferCreationAttributes, CreationOptional, ForeignKey, NonAttribute } from 'sequelize';
 
 import db from '../services/data/database.js';
 
@@ -12,6 +12,7 @@ class Agenda extends Model<InferAttributes<Agenda>, InferCreationAttributes<Agen
   declare expire_cron: string | null;
   declare owner_id:    ForeignKey<User['id']>;
   declare parent_id:   ForeignKey<Agenda['id']>;
+  declare owner:       NonAttribute<string>;
 }
 
 Agenda.init({
