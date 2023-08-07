@@ -18,18 +18,6 @@ CREATE TABLE IF NOT EXISTS Principal (
     UNIQUE (user_id, role)
 );
 
-/*
-CREATE VIEW IF NOT EXISTS v_User_Principal AS
-  SELECT
-    u.name AS name,
-    p.role AS role,
-    p.password AS password,
-    p.is_enabled AS is_enabled
-  FROM User u
-  INNER JOIN Principal p ON u.id = p.user_id
-;
-*/
-
 CREATE TABLE IF NOT EXISTS Calendar (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT,
