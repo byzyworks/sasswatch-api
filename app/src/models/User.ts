@@ -1,5 +1,3 @@
-import { strict as assert } from 'assert';
-
 import bcrypt from 'bcrypt';
 
 import auth                        from '../services/auth/credentials.js';
@@ -21,15 +19,15 @@ interface INameSearchKey {
 type ISearchKey = IIdSearchKey | INameSearchKey;
 
 interface IPrincipal {
-  name:     string;
-  password: string;
-  enabled:  boolean;
+  name?:     string;
+  password?: string;
+  enabled?:  boolean;
 }
 
 interface IUser {
-  username: string;
-  roles:    IPrincipal[];
-  enabled:  boolean;
+  username?: string;
+  roles?:    IPrincipal[];
+  enabled?:  boolean;
 }
 
 export class User {
@@ -42,9 +40,9 @@ export class User {
 
     // Insert the user's profile.
 
-    let mappings = new Map<string, [string, common.Primitive]>();
-    mappings.set('username', ['name',       user.username]);
-    mappings.set('enabled',  ['is_enabled', user.enabled ?? true]);
+    let mappings = new Map<string, common.Primitive>();
+    mappings.set('name',       user.username);
+    mappings.set('is_enabled', user.enabled ?? true);
 
     let user_id;
     try {
@@ -55,16 +53,20 @@ export class User {
 
     // Insert the user's roles.
 
+    if (user.roles === undefined) {
+      return;
+    }
+
     for (const role of user.roles) {
       if (role.name === undefined) {
-        throw new AppError('A role , which is required.', { is_fatal: false });
+        throw new AppError('A role name was not specified, which is required.', { is_fatal: false });
       }
 
-      mappings = new Map<string, [string, common.Primitive]>();
-      mappings.set('user_id',  ['user_id',    user_id]);
-      mappings.set('name',     ['role',       role.name ?? UserRole.EDIT]);
-      mappings.set('password', ['password',   await bcrypt.hash(role.password ?? '', 10)]);
-      mappings.set('enabled',  ['is_enabled', role.enabled ?? true]);
+      mappings = new Map<string, common.Primitive>();
+      mappings.set('user_id',    user_id);
+      mappings.set('role',       role.name);
+      mappings.set('password',   await bcrypt.hash(role.password ?? '', 10));
+      mappings.set('is_enabled', role.enabled ?? true);
 
       try {
         await common.insertMapped('Principal', mappings);
@@ -77,15 +79,15 @@ export class User {
   public static async update(key: ISearchKey, user: IUser) {
     // Update the user's profile.
 
-    let mappings = new Map<string, [string, common.Primitive]>();
+    let mappings = new Map<string, common.Primitive>();
     if (user.username !== undefined) {
-      mappings.set('username', ['name', user.username]);
+      mappings.set('name', user.username);
     }
     if (user.enabled !== undefined) {
-      mappings.set('enabled', ['is_enabled', user.enabled]);
+      mappings.set('is_enabled', user.enabled);
     }
 
-    let where = new Map<string, common.Primitive>;
+    let where = new Map<string, common.Primitive>();
     if ('id' in key) {
       where.set('id', key.id);
     } else {
@@ -94,12 +96,16 @@ export class User {
 
     let user_id;
     try {
-      user_id = await common.updateMapped('User', mappings, where);
+      user_id = await common.updateMappedWhere('User', mappings, where);
     } catch (err) {
       throw new AppError(`User "${user.username}" could not be updated.`, { is_fatal: false, cause: err });
     }
 
     // Update/insert the user's roles.
+
+    if (user.roles === undefined) {
+      return;
+    }
 
     for (const role of user.roles) {
       if (role.name === undefined) {
@@ -110,18 +116,18 @@ export class User {
       where.set('user_id', user_id);
       where.set('role',    role.name);
 
-      mappings = new Map<string, [string, common.Primitive]>();
-      mappings.set('user_id', ['user_id', user_id]);
-      mappings.set('name',    ['role',    role.name]);
+      mappings = new Map<string, common.Primitive>();
+      mappings.set('user_id', user_id);
+      mappings.set('role',    role.name);
       if (role.password !== undefined) {
-        mappings.set('password', ['password', await bcrypt.hash(role.password, 10)]);
+        mappings.set('password', await bcrypt.hash(role.password, 10));
       }
       if (role.enabled !== undefined) {
-        mappings.set('enabled', ['is_enabled', role.enabled]);
+        mappings.set('is_enabled', role.enabled);
       }
       
       if (await common.exists('Principal', where)) {
-        await common.updateMapped('Principal', mappings, where);
+        await common.updateMappedWhere('Principal', mappings, where);
       } else {
         await common.insertMapped('Principal', mappings);
       }
@@ -129,11 +135,14 @@ export class User {
   }
 
   public static async delete(key: ISearchKey) {
+    const where = new Map<string, common.Primitive>();
     if ('id' in key) {
-      await db.run('DELETE FROM User WHERE id = ?', key.id);
+      where.set('id', key.id);
     } else {
-      await db.run('DELETE FROM User WHERE name = ?', key.name);
+      where.set('name', key.name);
     }
+
+    await common.deleteWhere('User', where);
 
     // All user assets and roles will be deleted automatically due to ON DELETE CASCADE properties in database.sql.
   }

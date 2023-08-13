@@ -63,9 +63,14 @@ export class User {
 
     // Collect a list of the roles that the user has.
     const user_roles = [ ];
-    const user_roles_raw = await db.all('SELECT role FROM Principal WHERE user_id = ?', user_raw.id);
-    for (const role of user_roles_raw) {
-      user_roles.push(role.role);
+    const user_roles_raw = await db.all('SELECT * FROM Principal WHERE user_id = ? ORDER BY role', user_raw.id);
+    for (const role_raw of user_roles_raw) {
+      const role: IPrincipal = {
+        name:    role_raw.role,
+        enabled: role_raw.enabled,
+      };
+
+      user_roles.push(role);
     }
 
     // Compile the user information object.
@@ -92,8 +97,13 @@ export class User {
     // Collect a list of the particular type of asset that the user has.
     const assets: IAsset[] = [];
     const assets_raw = await db.all(`SELECT * FROM ${table} WHERE owner_id = ? ORDER BY title`, owner_id);
-    for (const asset of assets_raw) {
-      assets.push({ id: asset.id, title: asset.title });
+    for (const asset_raw of assets_raw) {
+      const asset = {
+        id: asset_raw.id,
+        title: asset_raw.title
+      };
+
+      assets.push(asset);
     }
 
     // Export the asset list.
@@ -125,9 +135,11 @@ export class User {
     const users_raw = await db.all('SELECT name FROM User ORDER BY name');
     for (const user_raw of users_raw) {
       const user = await this.getBasicUser({ name: user_raw.name });
-      if (user !== null) {
-        users.push(user);
+      if (user === null) {
+        break;
       }
+
+      users.push(user);
     }
 
     // Export the user list.

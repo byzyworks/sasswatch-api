@@ -1,8 +1,8 @@
 import express from 'express';
 import helmet  from 'helmet';
 
-import { authenticateUser }   from './middleware/authenticateUser.js';
-import { routes }             from './routes-old/index.js';
+import authenticateUser       from './middleware/authenticateUser.js';
+import { routes }             from './routes/index.js';
 import { error_handler }      from './utility/error.js';
 import { logger, httpLogger } from './utility/logger.js';
 

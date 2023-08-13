@@ -3,10 +3,10 @@ import { strict as assert } from 'assert';
 import { HttpStatusCode } from 'axios';
 import express            from 'express';
 
-import { routes as agendaRoutes }   from './agenda/index.js';
-import { routes as calendarRoutes } from './calendar/index.js';
-import { routes as messageRoutes }  from './message/index.js';
-import { routes as userRoutes }     from './user/index.js';
+import { routes as agendaRoutes }   from './agenda.js';
+import { routes as calendarRoutes } from './calendar.js';
+import { routes as messageRoutes }  from './message.js';
+import { routes as userRoutes }     from './user.js';
 
 export const routes = express.Router({ mergeParams: true });
 

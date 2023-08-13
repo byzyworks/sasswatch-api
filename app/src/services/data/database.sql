@@ -28,6 +28,15 @@ CREATE TABLE IF NOT EXISTS Calendar (
     ON DELETE CASCADE
 );
 
+CREATE VIEW IF NOT EXISTS v_User_Calendar AS
+  SELECT
+    c.id AS id,
+    u.name AS owner,
+    c.title AS title
+  FROM User u
+  INNER JOIN Calendar c ON u.id = c.owner_id
+;
+
 /**
 * Traps are webhooks used for push notifications.
 * Right now, all notifications are pull-based.
@@ -49,8 +58,9 @@ CREATE TABLE IF NOT EXISTS Trap (
 CREATE TABLE IF NOT EXISTS Agenda (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT,
-  active_cron TEXT NOT NULL,
+  active_cron TEXT,
   expire_cron TEXT,
+  is_immediate INTEGER NOT NULL DEFAULT 0,
   owner_id INTEGER NOT NULL,
   parent_id INTEGER,
   CONSTRAINT fk_owner_id
@@ -70,9 +80,36 @@ CREATE VIEW IF NOT EXISTS v_User_Agenda AS
     a.parent_id AS parent,
     a.title AS title,
     a.active_cron AS active_cron,
-    a.expire_cron AS expire_cron
+    a.expire_cron AS expire_cron,
+    a.is_immediate AS is_immediate
   FROM User u
   INNER JOIN Agenda a ON u.id = a.owner_id
+;
+
+CREATE TABLE IF NOT EXISTS Calendar_Agenda (
+  calendar_id INTEGER NOT NULL,
+  agenda_id INTEGER NOT NULL,
+  CONSTRAINT fk_calendar_id
+    FOREIGN KEY (calendar_id)
+    REFERENCES Calendar(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_agenda_id
+    FOREIGN KEY (agenda_id)
+    REFERENCES Agenda(id)
+    ON DELETE CASCADE,
+  CONSTRAINT pk_calendar_agenda
+    PRIMARY KEY (calendar_id, agenda_id)
+);
+
+CREATE VIEW IF NOT EXISTS v_Calendar_Agenda AS
+  SELECT
+    ca.calendar_id AS calendar_id,
+    ca.agenda_id AS agenda_id,
+    c.title AS calendar_title,
+    a.title AS agenda_title
+  FROM Calendar_Agenda ca
+  INNER JOIN Calendar c ON ca.calendar_id = c.id
+  INNER JOIN Agenda a ON ca.agenda_id = a.id
 ;
 
 CREATE TABLE IF NOT EXISTS Message (
@@ -118,17 +155,18 @@ CREATE TABLE IF NOT EXISTS Agenda_Message (
 
 CREATE VIEW IF NOT EXISTS v_Agenda_Message AS
   SELECT
-    am.agenda_id AS agenda,
-    m.weight AS weight,
-    m.title AS title,
-    m.payload AS payload
+    am.agenda_id AS agenda_id,
+    am.message_id AS message_id,
+    a.title AS agenda_title,
+    m.title AS message_title
   FROM Agenda_Message am
+  INNER JOIN Agenda a ON am.agenda_id = a.id
   INNER JOIN Message m ON am.message_id = m.id
 ;
 
 CREATE TABLE IF NOT EXISTS Event (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  active_time INTEGER NOT NULL,
+  active_time INTEGER,
   expire_time INTEGER,
   calendar_id INTEGER NOT NULL,
   message_id INTEGER NOT NULL,
@@ -163,14 +201,29 @@ CREATE TABLE IF NOT EXISTS Event_Agenda (
     PRIMARY KEY (event_id, agenda_id)
 );
 
-CREATE VIEW IF NOT EXISTS v_Event_Message AS
+CREATE VIEW IF NOT EXISTS v_Event_Agenda AS
   SELECT
-    c.calendar_id AS calendar_id,
+    ea.event_id AS event_id,
+    ea.agenda_id AS agenda_id,
+    ea.depth AS depth,
+    a.title AS agenda_title
+  FROM Event_Agenda ea
+  INNER JOIN Agenda a ON ea.agenda_id = a.id
+
+CREATE VIEW IF NOT EXISTS v_User_Calendar_Event_Message AS
+  SELECT
+    e.id AS id,
+    u.name AS owner,
+    e.calendar_id AS calendar_id,
+    c.calendar_title AS calendar_title,
     e.active_time AS active_time,
     e.expire_time AS expire_time,
+    m.id AS message,
     m.weight AS weight,
     m.title AS title,
     m.payload AS payload
   FROM Event e
   INNER JOIN Message m ON e.message_id = m.id
+  INNER JOIN Calendar c ON e.calendar_id = c.id
+  INNER JOIN User u ON c.owner_id = u.id
 ;
