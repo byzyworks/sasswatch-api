@@ -3,7 +3,7 @@ import db                          from '../services/data/database.js';
 import { AppError, error_handler } from '../utility/error.js';
 import { logger }                  from '../utility/logger.js';
 
-import * as common from '../models/common.js';
+import * as common from './common.js';
 
 interface ISearchKey {
   id: number;
@@ -28,10 +28,10 @@ type ICalendarUpdate = ICalendarBase & {
   }
 }
 
-export class Calendar {
+export default class Calendar {
   constructor() { }
 
-  public static async insert(calendar: ICalendarInsert) {
+  public static async insert(calendar: ICalendarInsert): Promise<number> {
     let mappings = new Map<string, common.Primitive>();
     mappings.set('title', calendar.title ?? null);
 
@@ -46,9 +46,11 @@ export class Calendar {
         await common.insertMapped('CalendarAgenda', mappings);
       }
     }
+
+    return calendar_id;
   }
 
-  public static async update(key: ISearchKey, calendar: ICalendarUpdate) {
+  public static async update(key: ISearchKey, calendar: ICalendarUpdate): Promise<number> {
     let mappings = new Map<string, common.Primitive>();
     if (calendar.title !== undefined) {
       mappings.set('title', calendar.title);
@@ -76,6 +78,8 @@ export class Calendar {
         }
       }
     }
+
+    return calendar_id;
   }
 
   public static async delete(key: ISearchKey) {

@@ -10,21 +10,17 @@ routes.get('/:id',
 );
 
 routes.get('/',
-    authorizeRoute(['view', 'main', 'edit', 'root', 'read', 'audt']),
+    authorizeRoute(['edit', 'root', 'read', 'audt']),
 );
 
 routes.post('/',
-    authorizeRoute(['edit', 'root']),
+    authorizeRoute(['cron']),
 );
 
-routes.put('/:id',
-    authorizeRoute(['edit', 'root']),
-);
-
-routes.patch('/:id',
+routes.delete('/recurrent/:id',
     authorizeRoute(['edit', 'root']),
 );
 
 routes.delete('/:id',
-    authorizeRoute(['edit', 'root']),
+    authorizeRoute(['main', 'edit', 'root', 'cron']),
 );

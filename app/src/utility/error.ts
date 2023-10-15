@@ -23,6 +23,14 @@ export class AppError<T extends AppErrorOptions> extends Error {
   }
 }
 
+export class ModelError<T extends AppErrorOptions> extends AppError<T> {
+  constructor(message: string, public readonly options: T = { } as T) {
+    super(message);
+    this.name = 'ModelError';
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
 class ErrorHandler {
   lastError?: Error;
 

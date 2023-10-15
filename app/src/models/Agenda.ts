@@ -3,7 +3,7 @@ import db                          from '../services/data/database.js';
 import { AppError, error_handler } from '../utility/error.js';
 import { logger }                  from '../utility/logger.js';
 
-import * as common from '../models/common.js';
+import * as common from './common.js';
 
 interface ISearchKey {
   id: number;
@@ -34,13 +34,10 @@ type IAgendaUpdate = IAgendaBase & {
   }
 }
 
-export class Agenda {
+export default class Agenda {
   constructor() { }
 
-  /**
-   * throws AppError
-   */
-  public static async insert(agenda: IAgendaInsert) {
+  public static async insert(agenda: IAgendaInsert): Promise<number> {
     let mappings = new Map<string, common.Primitive>();
     mappings.set('parent_id', agenda.parent ?? null);
     mappings.set('title',     agenda.title  ?? null);
@@ -62,12 +59,11 @@ export class Agenda {
         await common.insertMapped('Agenda_Message', mappings);
       }
     }
+
+    return agenda_id;
   }
 
-  /**
-   * throws AppError
-   */
-  public static async update(key: ISearchKey, agenda: IAgendaUpdate) {
+  public static async update(key: ISearchKey, agenda: IAgendaUpdate): Promise<number> {
     let mappings = new Map<string, common.Primitive>();
     if (agenda.parent !== undefined) {
       mappings.set('parent_id', agenda.parent);
@@ -108,6 +104,8 @@ export class Agenda {
         await common.deleteWhere('Agenda_Message', mappings);
       }
     }
+
+    return agenda_id;
   }
 
   public static async delete(key: ISearchKey) {

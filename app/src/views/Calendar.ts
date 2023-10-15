@@ -36,7 +36,7 @@ interface ICalendar {
   events?:  IEvent[];
 }
 
-export class Calendar {
+export default class Calendar {
   constructor() { }
 
   private static async getBasicCalendar(key: ISearchKey): Promise<ICalendar | null> {

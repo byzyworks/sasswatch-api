@@ -25,7 +25,7 @@ interface IMessage {
   events?:  IAsset[];
 }
 
-export class Message {
+export default class Message {
   constructor() { }
 
   private static async getBasicMessage(key: ISearchKey): Promise<IMessage | null> {

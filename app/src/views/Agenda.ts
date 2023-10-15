@@ -32,7 +32,7 @@ interface IAgenda {
   children?:  IAgenda[];
 }
 
-export class Agenda {
+export default class Agenda {
   constructor() { }
 
   private static async getBasicAgenda(key: ISearchKey): Promise<IAgenda | null> {

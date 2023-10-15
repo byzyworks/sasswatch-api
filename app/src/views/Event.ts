@@ -38,7 +38,7 @@ interface IEvent {
   }
 }
 
-export class Event {
+export default class Event {
   constructor() { }
 
   private static async getBasicEvent(key: ISearchKey): Promise<IEvent | null> {

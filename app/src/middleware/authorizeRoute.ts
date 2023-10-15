@@ -16,7 +16,7 @@ import { logger }   from '../utility/logger.js';
  * 
  * @returns True if the user is authorized, false otherwise.
  */
-export default async (roles: string[]) => {
+export default (roles: string[]) => {
   return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     // Checks the function's provided list of allowed roles against the user's authenticated role.
     const this_role = auth.role;

@@ -35,7 +35,7 @@ interface IUser {
   messages?:  IAsset[];
 }
 
-export class User {
+export default class User {
   constructor() { }
 
   /**

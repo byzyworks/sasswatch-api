@@ -15,13 +15,13 @@
  * Every role requires a different (meaning separately-maintained) password from each other role.
  */
 export default abstract class UserRole {
-    public static VIEW       = 'view'
-    public static MAINTAIN   = 'main'
-    public static EDIT       = 'edit'
-    public static ADMIN      = 'root'
-    public static CRON       = 'cron'
-    public static AUDIT_USER = 'read'
-    public static AUDIT_ALL  = 'audt'
+  public static VIEW       = 'view'
+  public static MAINTAIN   = 'main'
+  public static EDIT       = 'edit'
+  public static ADMIN      = 'root'
+  public static CRON       = 'cron'
+  public static AUDIT_USER = 'read'
+  public static AUDIT_ALL  = 'audt'
 }
 
 // freeze UserRole to prevent modification

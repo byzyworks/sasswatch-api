@@ -3,7 +3,7 @@ import db                          from '../services/data/database.js';
 import { AppError, error_handler } from '../utility/error.js';
 import { logger }                  from '../utility/logger.js';
 
-import * as common from '../models/common.js';
+import * as common from './common.js';
 
 interface ISearchKey {
   id: number;
@@ -15,10 +15,10 @@ interface IMessage {
   payload?: string;
 }
 
-export class Message {
+export default class Message {
   constructor() { }
 
-  public static async insert(message: IMessage) {
+  public static async insert(message: IMessage): Promise<number> {
     if (message.title === undefined) {
       throw new AppError('Message being created was not supplied with a title, which is required.', { is_fatal: false });
     }
@@ -29,9 +29,11 @@ export class Message {
     mappings.set('payload', message.payload ?? null);
 
     const message_id = await common.insertMapped('Message', mappings);
+
+    return message_id;
   }
 
-  public static async update(key: ISearchKey, message: IMessage) {
+  public static async update(key: ISearchKey, message: IMessage): Promise<number> {
     if (message.title === undefined) {
       throw new AppError('Message being created was not supplied with a title, which is required.', { is_fatal: false });
     }
@@ -51,6 +53,8 @@ export class Message {
     where.set('id', key.id);
 
     const message_id = await common.updateMappedWhere('Message', mappings, where);
+
+    return message_id;
   }
 
   public static async delete(key: ISearchKey) {

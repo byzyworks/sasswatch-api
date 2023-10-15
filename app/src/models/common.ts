@@ -5,7 +5,7 @@ import { logger }                  from '../utility/logger.js';
 
 export type Primitive = string | number | boolean | null;
 
-export const exists = async (table: string, where: Map<string, Primitive>): Promise<boolean> => {
+export const existsWhere = async (table: string, where: Map<string, Primitive>): Promise<boolean> => {
   let query       = `SELECT EXISTS(SELECT 1 FROM ${table} WHERE `;
   let commas_left = where.size - 1;
   for (const key in where) {
@@ -95,7 +95,7 @@ export const updateMappedWhere = async (table: string, mappings: Map<string, Pri
 
   const result = await db.run(query, values);
   if ((result === undefined) || (result.lastID === undefined)) {
-    throw new AppError(`Could not insert into table "${table}".`, { is_fatal: false });
+    throw new AppError(`Could not update table "${table}".`, { is_fatal: false });
   }
 
   return result.lastID;

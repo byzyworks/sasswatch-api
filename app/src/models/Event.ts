@@ -3,7 +3,7 @@ import db                          from '../services/data/database.js';
 import { AppError, error_handler } from '../utility/error.js';
 import { logger }                  from '../utility/logger.js';
 
-import * as common from '../models/common.js';
+import * as common from './common.js';
 
 interface ISearchKey {
   id: number;
@@ -18,10 +18,10 @@ interface IEvent {
   message: number;
 }
 
-export class Event {
+export default class Event {
   constructor() { }
 
-  public static async insert(event: IEvent) {
+  public static async insert(event: IEvent): Promise<number> {
     if (event.calendar === undefined) {
       throw new AppError('Event being created was not supplied with a calendar, which is required.', { is_fatal: false });
     }
@@ -39,9 +39,11 @@ export class Event {
     mappings.set('message_id',  event.message);
 
     const event_id = await common.insertMapped('Event', mappings);
+
+    return event_id;
   }
 
-  public static async update(key: ISearchKey, event: IEvent) {
+  public static async update(key: ISearchKey, event: IEvent): Promise<number> {
     const mappings = new Map<string, common.Primitive>();
     if (event.calendar !== undefined) {
       mappings.set('calendar_id', event.calendar);
@@ -62,6 +64,8 @@ export class Event {
     where.set('id', key.id);
 
     const event_id = await common.updateMappedWhere('Event', mappings, where);
+
+    return event_id;
   }
 
   public static async delete(key: ISearchKey) {

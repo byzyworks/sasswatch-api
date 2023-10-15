@@ -1,16 +1,30 @@
 import { HttpStatusCode } from 'axios';
 import express            from 'express';
 
+import authorizeRoute from '../middleware/authorizeRoute.js';
+
 export const routes = express.Router({ mergeParams: true });
 
-routes.get('/:id', );
+routes.get('/:id',
+    authorizeRoute(['edit', 'root', 'read', 'audt']),
+);
 
-routes.get('/', );
+routes.get('/',
+    authorizeRoute(['edit', 'root', 'read', 'audt']),
+);
 
-routes.post('/', );
+routes.post('/',
+    authorizeRoute(['edit', 'root']),
+);
 
-routes.put('/:id', );
+routes.put('/:id',
+    authorizeRoute(['edit', 'root']),
+);
 
-routes.patch('/:id', );
+routes.patch('/:id',
+    authorizeRoute(['edit', 'root']),
+);
 
-routes.delete('/:id', );
+routes.delete('/:id',
+    authorizeRoute(['edit', 'root']),
+);

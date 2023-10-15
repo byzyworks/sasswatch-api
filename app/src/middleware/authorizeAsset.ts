@@ -16,7 +16,7 @@ import { logger }   from '../utility/logger.js';
  * 
  * @returns True if the user is authorized, false otherwise.
  */
-export default async (table: string) => {
+export default (table: string) => {
   return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     // Allows access to all resources regardless of ownership when authorized as an admin.
     // Cron is allowed ownership-free access too since it's internal. However, its route-level authorization is narrowed to only some event routes.

@@ -8,12 +8,12 @@ import { logger }   from '../utility/logger.js';
  * 
  */
 export default (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  try {
-    JSON.parse(req.body);
-  } catch (err) {
-    logger.error('A request body was sent that is not a valid JSON object, and thus could not be parsed.');
+  const id = Number(req.params.id);
+  if (isNaN(id) || id < 0) {
+    logger.error(`A request was sent affecting an object with ID "${id}", but this is not a valid ID.`);
     return res.status(HttpStatusCode.BadRequest).send();
   }
 
   return next();
 };
+
